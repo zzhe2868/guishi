@@ -4,6 +4,8 @@
 
 没有账号，没有服务器，没有任何外部请求。数据只存在你自己的浏览器里，随时可以导出带走。
 
+在线试用：<https://zzhe2868.github.io/guishi/>（同一份代码托管在 GitHub Pages，数据仍然只写在你的浏览器里）
+
 ## 特点
 
 - **打开就能用**：一个 `index.html`，原生 ES 模块，没有构建步骤，也没有运行时依赖
@@ -26,7 +28,7 @@
 需要 Node 18+，只是为了起一个静态服务。
 
 ```bash
-git clone <仓库地址>
+git clone https://github.com/zzhe2868/guishi.git
 cd guishi
 npm start
 ```
