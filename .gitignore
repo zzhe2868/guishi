@@ -1,0 +1,16 @@
+# 依赖（本项目没有运行时依赖，留着以防万一）
+node_modules/
+
+# 本地工作区与验证脚手架
+.workbuddy/
+.verify/
+*.mock.html
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 日志与截图
+*.log

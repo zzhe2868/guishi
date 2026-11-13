@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>归拾 · 本地个人信息管家</title>
+<meta name="description" content="把零散的想法、资料和待办收进一处。数据只存在你自己的浏览器里，不联网、不上传。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23B3543B'/%3E%3Ctext x='16' y='23' font-size='20' font-family='serif' fill='%23FFF8F2' text-anchor='middle'%3E%E6%8B%BE%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 本地存储不可用时的兜底提示 -->
+<div class="fatal" id="fatal" hidden>
+  <div class="fatal-card">
+    <h2>打不开本地数据库</h2>
+    <p id="fatal-msg">请检查浏览器是否禁用了本地存储，或者换一个浏览器再试。</p>
+    <button class="primary" onclick="location.reload()">重新加载</button>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="seal">拾</span>
+      <div>
+        <div class="brand-name">归拾</div>
+        <div class="brand-sub">本地个人信息管家</div>
+      </div>
+    </div>
+
+    <button class="capture-link" id="nav-capture">
+      <span class="plus">+</span> 记一笔
+      <kbd>N</kbd>
+    </button>
+
+    <nav class="nav" id="nav">
+      <a href="#/inbox" data-route="inbox">
+        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        <span>收件箱</span><em id="nav-count-inbox"></em>
+      </a>
+      <a href="#/tasks" data-route="tasks">
+        <svg viewBox="0 0 24 24"><path d="M4 6h10M4 12h10M4 18h6"/><path d="M18 5l2 2 3-3" opacity=".85"/></svg>
+        <span>待办</span><em id="nav-count-tasks"></em>
+      </a>
+      <a href="#/review" data-route="review">
+        <svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-5"/></svg>
+        <span>回顾</span>
+      </a>
+    </nav>
+
+    <div class="side-spacer"></div>
+
+    <div class="side-tools">
+      <button class="tool-btn" id="btn-backup" title="导出 / 导入 / 清空">
+        <svg viewBox="0 0 24 24"><path d="M12 4v10"/><path d="M8 11l4 4 4-4"/><path d="M5 19h14"/></svg>
+        <span>备份</span>
+      </button>
+      <button class="tool-btn" id="btn-tags" title="标签管理">
+        <svg viewBox="0 0 24 24"><path d="M4 6h9l6 6-7 7-8-8z"/><circle cx="9" cy="10" r="1.2"/></svg>
+        <span>标签</span>
+      </button>
+    </div>
+
+    <div class="backup-menu" id="backup-menu" hidden>
+      <button data-backup="md">导出 Markdown（可读）</button>
+      <button data-backup="json">导出 JSON（可导回）</button>
+      <button data-backup="import">从 JSON 导入…</button>
+      <button data-backup="wipe" class="danger-item">清空全部数据</button>
+    </div>
+
+    <div class="local-status" id="local-status" title="所有内容都存在这个浏览器里，不会上传">
+      <span class="dot"></span><span id="local-status-text">本地存储</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- 收件箱 -->
+    <section class="view view-inbox" data-view="inbox">
+      <div class="pad">
+        <header class="view-head">
+          <div>
+            <h1>收件箱</h1>
+            <p class="view-sub">想到什么先记下来，分类、标签和摘要都可以之后慢慢补。</p>
+          </div>
+        </header>
+
+        <div class="summary-bar" id="summary-bar"></div>
+
+        <form class="composer" id="composer">
+          <textarea id="capture" rows="2" placeholder="想到什么就写下来 —— 一句话、一段摘录、一个链接、一件要做的事…"></textarea>
+          <div class="composer-foot">
+            <div class="kind-pick" id="kind-pick">
+              <button type="button" data-kind="idea" class="on">想法</button>
+              <button type="button" data-kind="note">资料</button>
+              <button type="button" data-kind="task">待办</button>
+              <button type="button" data-kind="link">链接</button>
+              <button type="button" data-kind="quote">摘录</button>
+            </div>
+            <div class="composer-actions">
+              <span class="kbd-hint"><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> 保存</span>
+              <button type="submit" class="primary" id="capture-btn">记下来</button>
+            </div>
+          </div>
+        </form>
+
+        <label class="search">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input id="search" type="search" placeholder="搜索标题、摘要、原文或标签">
+          <button type="button" id="search-clear" hidden aria-label="清空">×</button>
+        </label>
+
+        <div class="toolbar">
+          <div class="chips" id="kind-filter"></div>
+        </div>
+
+        <div class="tagrow" id="tag-row" hidden></div>
+
+        <div class="list-meta" id="list-meta"></div>
+
+        <div class="list" id="entry-list"></div>
+
+        <div class="empty" id="inbox-empty" hidden>
+          <div class="empty-mark">拾</div>
+          <h3>还没有记录</h3>
+          <p>想到什么就写一句。之后可以给它加标签、写摘要，<br>再用搜索把它找回来。</p>
+          <button class="ghost" id="load-sample">载入几条示例看看</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 待办 -->
+    <section class="view view-tasks" data-view="tasks" hidden>
+      <div class="pad">
+        <header class="view-head">
+          <div>
+            <h1>待办</h1>
+            <p class="view-sub">可以直接加，也可以在任意一条记录里点「设为待办」。</p>
+          </div>
+        </header>
+
+        <form class="inline-add" id="task-form">
+          <input id="task-input" placeholder="加一条待办，回车保存">
+          <button type="submit" class="primary sm">添加</button>
+        </form>
+
+        <div class="task-groups" id="task-groups"></div>
+      </div>
+    </section>
+
+    <!-- 回顾 -->
+    <section class="view view-review" data-view="review" hidden>
+      <div class="pad">
+        <header class="view-head">
+          <div>
+            <h1>回顾</h1>
+            <p class="view-sub">按时间把记录和待办数一遍，每个数字都能在列表里对上。</p>
+          </div>
+          <button class="ghost" id="review-export">导出这份回顾</button>
+        </header>
+
+        <div class="seg" id="review-range">
+          <button type="button" data-days="7" class="on">最近 7 天</button>
+          <button type="button" data-days="30">最近 30 天</button>
+          <button type="button" data-days="90">最近 90 天</button>
+        </div>
+
+        <div class="review-body" id="review-body"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="drawer-mask" id="drawer-mask" hidden></div>
+  <aside class="drawer" id="drawer" hidden aria-label="记录详情"></aside>
+
+  <div class="toasts" id="toasts"></div>
+</div>
+
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+
+<div class="modal" id="tag-modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>标签管理</h3>
+      <button class="dw-close" id="tag-close" aria-label="关闭">×</button>
+    </div>
+    <p class="modal-sub">改名会同步更新所有用到它的记录；改成已有的标签名就等于合并。</p>
+    <div class="tag-manage" id="tag-list"></div>
+  </div>
+</div>
+
+<div class="confirm" id="confirm" hidden>
+  <div class="confirm-card">
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="ghost" id="confirm-no">取消</button>
+      <button class="danger" id="confirm-yes">确定</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

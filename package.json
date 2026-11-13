@@ -1,0 +1,23 @@
+{
+  "name": "guishi",
+  "version": "2.0.0",
+  "description": "归拾 · 一个把想法、资料和待办收在一处的本地个人信息管家，数据只存在浏览器里",
+  "type": "module",
+  "license": "MIT",
+  "private": false,
+  "keywords": [
+    "notes",
+    "personal-knowledge-base",
+    "local-first",
+    "indexeddb",
+    "vanilla-js"
+  ],
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
